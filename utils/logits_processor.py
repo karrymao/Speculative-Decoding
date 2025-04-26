@@ -49,6 +49,19 @@ class MultinomialProcessor(LogitsProcessor):
         return torch.multinomial(probs, num_samples=1)
 
 
+class RandomProcessor(LogitsProcessor):
+    """Random: Uniformly random sampling."""
+
+    def __init__(self, temperature: float):
+        super().__init__(temperature)
+
+    def _process(self, logits: Tensor) -> Tensor:
+        return logits
+
+    def sample(self, probs: Tensor) -> Tensor:
+        return torch.randint(0, probs.size(-1), size=probs.size()[:-1], device=probs.device).unsqueeze(-1)
+
+
 class TopKProcessor(MultinomialProcessor):
     """Top-k: Top-k sampling."""
 
