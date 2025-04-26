@@ -88,7 +88,7 @@ class TokenTree:
                         print(f"Node {token_i} attends to Node {token_j}")
         return attention_mask
 
-    def longest_accepted_sequence(self, target_prob: torch.Tensor) -> List[Tuple[int, float]]:
+    def longest_accepted_sequence(self, target_prob: torch.Tensor, debug=False) -> List[Tuple[int, float]]:
         """
         Get the longest accepted sequence from the tree.
             target_prob: tensor of shape (1, num_nodes, vocab_size).
@@ -113,7 +113,8 @@ class TokenTree:
                 longest_accepted_node_ids = accepted_node_ids.copy()
 
             for child in node.children.values():
-                print(f"child: {child.token_id}, p={target_prob[0, node.id, child.token_id]}, q={child.q}")
+                if debug:
+                    print(f"child: {child.token_id}, p={target_prob[0, node.id, child.token_id]}, q={child.q}")
                 if torch.rand(1, device=target_prob.device) < target_prob[0, node.id, child.token_id] / child.q:
                     # accept the child
                     _accept(child)
