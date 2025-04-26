@@ -2,7 +2,7 @@ import argparse
 import random
 import numpy as np
 import torch
-from sampling import autoregressive_generate, speculative_generate
+from sampling import autoregressive_generate, speculative_generate, speculative_generate_multi
 from ngram_assisted import OneLevelNGramStorage, NGramStorage, ngram_assisted_speculative_generate
 from utils.logits_processor import GreedyProcessor, MultinomialProcessor, TopKProcessor, NucleusProcessor, TopKNucleusProcessor
 from transformers import (
@@ -29,6 +29,7 @@ class InferenceCLI:
         self.gen_len = 35
         self.debug = False
         self.spec = True
+        self.spec_multi = True
         self.dr = False
         self.cache = False
         self.target_gen = True
@@ -123,6 +124,10 @@ class InferenceCLI:
         if args[0] == "/speculative":
             self.spec = not self.spec
             print(colored(f"Speculative Decoding generation: {self.spec}", on_color="on_blue"))
+            return
+        if args[0] == "/speculative-multi":
+            self.spec = not self.spec_multi
+            print(colored(f"Speculative Decoding (Multiple SSMs) generation: {self.spec_multi}", on_color="on_blue"))
             return
         if args[0] == "/drafter":
             self.dr = not self.dr
@@ -237,6 +242,8 @@ class InferenceCLI:
         print("/clear: clear the screen")
         print("/speculative: toggle speculative decoding")
         print(colored(f"\t{self.spec}", "green" if self.spec else "red"))
+        print("/speculative-multi: toggle speculative decoding with multiple SSMs")
+        print(colored(f"\t{self.spec_multi}", "green" if self.spec_multi else "red"))
         print("/target: toggle target generation")
         print(colored(f"\t{self.target_gen}", "green" if self.target_gen else "red"))
         print("/drafter: toggle drafter generation")
@@ -300,7 +307,32 @@ class InferenceCLI:
             spec_throughput = len(spec_output) / (spec_end_time - spec_start_time)
             print(colored(f"Throughput: {spec_throughput:.1f} tokens/s", "green"))
             print(colored("========== Speculative ==========", "green"))
-            
+        
+        if self.spec_multi:
+            self._set_seed(42)
+            spec_multi_start_time = time.time()
+            output_ids, accept_rate = speculative_generate_multi(
+                tokenized,
+                self.drafter,
+                self.target,
+                tokenizer=self.tokenizer,
+                logits_processor=self.processor,
+                gamma=self.gamma,
+                max_gen_len=self.gen_len,
+                eos_tokens_id=self.end_tokens,
+                debug=self.debug,
+                use_cache=self.cache,
+            )
+            spec_multi_end_time = time.time()
+            spec_multi_output = self.tokenizer.decode(output_ids, skip_special_tokens=True)
+            print(colored("========== Speculative (Multi) ==========", "green"))
+            print(colored("Out:", "green"), spec_output)
+            print(colored(f"Acceptance rate: {accept_rate:.3f}", "green"))
+            spec_multi_throughput = len(spec_multi_output) / (spec_multi_end_time - spec_multi_start_time)
+            print(colored(f"Throughput: {spec_multi_throughput:.1f} tokens/s", "green"))
+            print(colored("========== Speculative (Multi) ==========", "green"))
+
+
         if self.ngram_gen:
             self._set_seed(42)
             ngram_start_time = time.time()
