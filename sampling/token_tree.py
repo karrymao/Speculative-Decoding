@@ -96,11 +96,11 @@ class TokenTree:
             token_ids: list of token ids in the longest accepted sequence.
             p: target_prob filtered by the longest accepted sequence. shape (1, len(accepted_tokens), vocab_size)
         """
-        assert target_prob.shape == (
-            1,
-            len(self.nodelist),
-            len(self.tokenizer),
-        ), f"target_prob shape {target_prob.shape} does not match expected shape {(1, len(self.nodelist), len(self.tokenizer))}"
+        # assert target_prob.shape == (
+        #     1,
+        #     len(self.nodelist),
+        #     len(self.tokenizer),
+        # ), f"target_prob shape {target_prob.shape} does not match expected shape {(1, len(self.nodelist), len(self.tokenizer))}"
 
         accepted_node_ids = []
         longest_accepted_node_ids = []

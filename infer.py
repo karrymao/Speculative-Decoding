@@ -76,7 +76,8 @@ class InferenceCLI:
 
     def _load_models(self):
         # Target model
-        target_model = "meta-llama/Llama-3.2-3B-Instruct"
+        # target_model = "meta-llama/Llama-3.2-3B-Instruct"
+        target_model = "meta-llama/Llama-3.2-11B-Vision-Instruct"
         target_quantize = QuantoConfig(weights="int8")  # QuantoConfig(weights="int8")  None
         
         # Drafter model
@@ -126,7 +127,7 @@ class InferenceCLI:
             print(colored(f"Speculative Decoding generation: {self.spec}", on_color="on_blue"))
             return
         if args[0] == "/speculative-multi":
-            self.spec = not self.spec_multi
+            self.spec_multi = not self.spec_multi
             print(colored(f"Speculative Decoding (Multiple SSMs) generation: {self.spec_multi}", on_color="on_blue"))
             return
         if args[0] == "/drafter":
