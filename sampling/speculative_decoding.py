@@ -281,7 +281,7 @@ def speculative_generate_multi(
             printing.initial_step(t, tokenizer)
     
     while current_position < total_len:
-        corrected_gamma = min(gamma, (total_len - current_position - 1) // trial)
+        corrected_gamma = min(gamma, total_len - current_position - 1)
         # q = torch.zeros((1, corrected_gamma, vocabulary_size), device=target.device) # TODO: implement q
 
         input_ids = input_ids.to(drafter.device)
@@ -314,6 +314,9 @@ def speculative_generate_multi(
             drafts_speculated += speculated_tokens
             input_ids = input_ids.to(target.device) # TODO: check this
         
+        if debug:
+            print(tree)
+
         # create the attention mask
         sequence_len = current_position + len(tree.nodelist) - 1
         attention_mask = torch.tril(torch.ones((1, sequence_len, sequence_len), dtype=torch.long, device=target.device))
