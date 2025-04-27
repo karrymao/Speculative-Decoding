@@ -281,7 +281,7 @@ def speculative_generate_multi(
             printing.initial_step(t, tokenizer)
     
     while current_position < total_len:
-        corrected_gamma = min(gamma, (intermediate_len - current_position - 1) // trial)
+        corrected_gamma = min(gamma, (total_len - current_position - 1) // trial)
         # q = torch.zeros((1, corrected_gamma, vocabulary_size), device=target.device) # TODO: implement q
 
         input_ids = input_ids.to(drafter.device)
@@ -381,4 +381,4 @@ def speculative_generate_multi(
                 printing.end_token_found(n)
             return input_ids[0, prompt_len:current_position].tolist(), drafts_accepted / drafts_speculated
     
-    return input_ids[0, prompt_len:].tolist(), drafts_accepted / drafts_speculated
+    return input_ids[0, prompt_len:total_len].tolist(), drafts_accepted / drafts_speculated

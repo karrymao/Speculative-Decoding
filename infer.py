@@ -326,7 +326,7 @@ class InferenceCLI:
             spec_multi_end_time = time.time()
             spec_multi_output = self.tokenizer.decode(output_ids, skip_special_tokens=True)
             print(colored("========== Speculative (Multi) ==========", "green"))
-            print(colored("Out:", "green"), spec_output)
+            print(colored("Out:", "green"), spec_multi_output)
             print(colored(f"Acceptance rate: {accept_rate:.3f}", "green"))
             spec_multi_throughput = len(spec_multi_output) / (spec_multi_end_time - spec_multi_start_time)
             print(colored(f"Throughput: {spec_multi_throughput:.1f} tokens/s", "green"))
