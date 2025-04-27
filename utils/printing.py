@@ -13,7 +13,8 @@ def token_ids_to_string(token_ids, tokenizer):
     Returns:
         str: String representation of token ids.
     """
-    strings = tokenizer.convert_ids_to_tokens(token_ids)
+    # strings = tokenizer.convert_ids_to_tokens(token_ids)
+    strings = [tokenizer.decode(token_id) for token_id in token_ids]
     return " ".join(strings)
 
 
