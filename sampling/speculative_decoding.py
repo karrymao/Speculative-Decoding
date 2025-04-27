@@ -253,7 +253,7 @@ def speculative_generate_multi(
     prompt_len = len(inputs)
     max_seq_length = target.config.max_position_embeddings if hasattr(target.config, 'max_position_embeddings') else (target.config.max_context_length if hasattr(target.config, 'max_context_length') else 1024)
     total_len = min(max_seq_length, prompt_len + max_gen_len)
-    intermediate_len = min(max_seq_length, prompt_len + max_gen_len * trial)
+    intermediate_len = min(max_seq_length, prompt_len + max_gen_len + gamma * trial)
     input_ids = torch.full((1, intermediate_len), pad_token_id, dtype=torch.long, device=target.device)
     input_ids[0, :prompt_len] = torch.tensor(inputs, dtype=torch.long, device=target.device)
     
@@ -284,35 +284,38 @@ def speculative_generate_multi(
         corrected_gamma = min(gamma, total_len - current_position - 1)
         # q = torch.zeros((1, corrected_gamma, vocabulary_size), device=target.device) # TODO: implement q
 
-        input_ids = input_ids.to(drafter.device)
+        input_ids_draft = input_ids.repeat(trial, 1).to(drafter.device)
         tree = TokenTree(root_token_id=input_ids[0, current_position - 1].item(), tokenizer=tokenizer)
 
         # generate gamma drafts
-        for _ in range(trial):
-            sequence = []
-            for k in range(corrected_gamma):
-                Mq = drafter(
-                    input_ids=input_ids[..., :current_position + k],
-                    past_key_values=drafter_cache,
-                    use_cache=use_cache,
-                )
-                drafter_cache = Mq.past_key_values
+        sequences = [[] for _ in range(trial)]
+        for k in range(corrected_gamma):
+            Mq = drafter(
+                input_ids=input_ids_draft[..., :current_position + k],
+                past_key_values=drafter_cache,
+                use_cache=use_cache,
+            )
+            drafter_cache = Mq.past_key_values
 
-                draft_logits = Mq.logits[..., -1, :]
-                draft_probs = logits_processor(draft_logits)
-                # q[0, k] = draft_probs.to(target.device)
-                xi = logits_processor.sample(draft_probs)
-                input_ids[0, current_position + k] = xi  # TODO: check this
-                sequence.append((xi.item(), draft_probs[0, xi].item()))
-                tree.insert(sequence)
-            
+            draft_logits = Mq.logits[..., -1, :]
+            draft_probs = logits_processor(draft_logits)
+            # q[0, k] = draft_probs.to(target.device)
+            xi = logits_processor.sample(draft_probs)
+            input_ids_draft[:, current_position + k] = xi.squeeze(-1)    # TODO: check this
+            for i in range(trial):
+                token_id = xi[i].item()
+                sequences[i].append((token_id, draft_probs[i, token_id].item()))
+
+        for seq in sequences:
+            tree.insert(seq)
             if debug:
-                print(printing.token_ids_to_string([_[0] for _ in sequence], tokenizer))
-            for i, node in enumerate(tree.nodelist):
-                input_ids[0, current_position - 1 + i] = node.token_id # TODO: vectorize this
-            speculated_tokens = len(tree.nodelist) - 1 # exclude root node
-            drafts_speculated += speculated_tokens
-            input_ids = input_ids.to(target.device) # TODO: check this
+                print(printing.token_ids_to_string([_[0] for _ in seq], tokenizer))
+
+        for i, node in enumerate(tree.nodelist):
+            input_ids[0, current_position - 1 + i] = node.token_id # TODO: vectorize this
+        speculated_tokens = len(tree.nodelist) - 1 # exclude root node
+        drafts_speculated += speculated_tokens
+        input_ids = input_ids.to(target.device) # TODO: check this
         
         if debug:
             print(tree)
