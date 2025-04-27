@@ -301,10 +301,7 @@ def speculative_generate_multi(
                 draft_logits = Mq.logits[..., -1, :]
                 draft_probs = logits_processor(draft_logits)
                 # q[0, k] = draft_probs.to(target.device)
-                if torch.rand(1).item() < 0.1:  # Just to get some randomness, TODO: remove this
-                    xi = random_processor.sample(draft_probs)
-                else:
-                    xi = logits_processor.sample(draft_probs)
+                xi = logits_processor.sample(draft_probs)
                 input_ids[0, current_position + k] = xi  # TODO: check this
                 sequence.append((xi.item(), draft_probs[0, xi].item()))
                 tree.insert(sequence)
