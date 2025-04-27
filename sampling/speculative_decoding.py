@@ -301,7 +301,7 @@ def speculative_generate_multi(
             draft_probs = logits_processor(draft_logits)
             # q[0, k] = draft_probs.to(target.device)
             xi = logits_processor.sample(draft_probs)
-            input_ids_draft[:, current_position + k] = xi.squeeze(-1)    # TODO: check this
+            input_ids_draft[:, current_position + k] = xi.squeeze(-1)
             for i in range(trial):
                 token_id = xi[i].item()
                 sequences[i].append((token_id, draft_probs[i, token_id].item()))
@@ -311,11 +311,10 @@ def speculative_generate_multi(
             if debug:
                 print(printing.token_ids_to_string([_[0] for _ in seq], tokenizer))
 
-        for i, node in enumerate(tree.nodelist):
-            input_ids[0, current_position - 1 + i] = node.token_id # TODO: vectorize this
         speculated_tokens = len(tree.nodelist) - 1 # exclude root node
+        input_ids[0, current_position:current_position + speculated_tokens] = torch.tensor([node.token_id for node in tree.nodelist[1:]], device=input_ids.device)
         drafts_speculated += speculated_tokens
-        input_ids = input_ids.to(target.device) # TODO: check this
+        input_ids = input_ids.to(target.device)
         
         if debug:
             print(tree)
