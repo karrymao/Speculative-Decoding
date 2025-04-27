@@ -203,7 +203,7 @@ def speculative_generate_multi(
     gamma: int = 5,
     trial: int = 5,
     logits_processor: LogitsProcessor = GreedyProcessor(),
-    max_gen_len: int = 40,  # TODO: check relevant logic
+    max_gen_len: int = 40,
     eos_tokens_id: int | List[int] = 1,
     pad_token_id: int = 0,
     use_cache: bool = False,
@@ -253,7 +253,8 @@ def speculative_generate_multi(
     prompt_len = len(inputs)
     max_seq_length = target.config.max_position_embeddings if hasattr(target.config, 'max_position_embeddings') else (target.config.max_context_length if hasattr(target.config, 'max_context_length') else 1024)
     total_len = min(max_seq_length, prompt_len + max_gen_len)
-    input_ids = torch.full((1, total_len), pad_token_id, dtype=torch.long, device=target.device)
+    intermediate_len = min(max_seq_length, prompt_len + max_gen_len * trial)
+    input_ids = torch.full((1, intermediate_len), pad_token_id, dtype=torch.long, device=target.device)
     input_ids[0, :prompt_len] = torch.tensor(inputs, dtype=torch.long, device=target.device)
     
     current_position = prompt_len
@@ -280,7 +281,7 @@ def speculative_generate_multi(
             printing.initial_step(t, tokenizer)
     
     while current_position < total_len:
-        corrected_gamma = min(gamma, total_len - current_position - 1)
+        corrected_gamma = min(gamma, (intermediate_len - current_position - 1) // trial)
         # q = torch.zeros((1, corrected_gamma, vocabulary_size), device=target.device) # TODO: implement q
 
         input_ids = input_ids.to(drafter.device)
