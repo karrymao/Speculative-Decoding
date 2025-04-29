@@ -311,6 +311,7 @@ class Experiment:
             "result": new_result,
             "comments": self.comments
         }
+        print(experiment_result["time"])
         # append to previous results
         try:
             with open(self.file_name + ".json", "r") as file:
