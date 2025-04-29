@@ -20,7 +20,7 @@ import json
 
 # this class is modified from infer.py
 class Experiment:
-    def __init__(self, device: str = "cuda", gamma = 4, gen_len = 35, 
+    def __init__(self, device: str = "cuda", gamma = 4, gen_len = 35, trial = 5,
         target_model = "Qwen/Qwen3-8B", 
         drafter_model = "Qwen/Qwen3-0.6B",
         samples = 10, comments: str = "experiment", result_file_name = "basic_test"):
@@ -37,6 +37,7 @@ class Experiment:
         self.file_name = result_file_name
 
         self.gamma = gamma
+        self.trial = trial
         self.gen_len = gen_len
         self.debug = False
         self.spec = True
@@ -175,6 +176,7 @@ class Experiment:
                 tokenizer=self.tokenizer,
                 logits_processor=self.processor,
                 gamma=self.gamma,
+                trial = self.trial,
                 max_gen_len=self.gen_len,
                 eos_tokens_id=self.end_tokens,
                 debug=self.debug,
@@ -267,7 +269,7 @@ class Experiment:
         }
 
     def _run(self):
-        df = pd.read_pickle("shortPrompts.pkl")
+        df = pd.read_pickle("short_prompts10k.pkl")
         # collect result
         result = dict()
         for row in df.sample(n=self.samples, random_state=15642)['prompt']:
@@ -282,7 +284,7 @@ class Experiment:
                     result[model] = v
         # calculate throughput
         new_result = dict()
-        for k, v in result:
+        for k, v in result.items():
             model_result = dict()
             model_result['num_token'] = v[0]
             model_result['time'] = v[1]
@@ -326,10 +328,13 @@ if __name__ == "__main__":
     # parser = argparse.ArgumentParser(description="Speculative Decoding CLI")
     # parser.add_argument("--device", type=str, default="cuda", help="Device to use for inference")
     # args = parser.parse_args()
-    # with open('experiment_configs.json') as f:
-    #     configs = json.load(f)  # Returns a list containing your config object
-    # for experiment in configs:
-    #     Experiment(**experiment)
-    Experiment()
+    with open('experiment_configs.json') as f:
+        configs = json.load(f)  # Returns a list containing your config object
+    i = 1
+    for experiment in configs:
+        print(colored("Starting experiment: ", on_color="on_red"), i)
+        Experiment(**experiment)
+        i+=1
+    # Experiment()
 
 

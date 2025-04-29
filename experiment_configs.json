@@ -1,0 +1,30 @@
+[
+    {
+      "target_model": "Qwen/Qwen3-8B",
+      "drafter_model": "Qwen/Qwen3-0.6B",
+      "samples": 3,
+      "gamma": 4,
+      "gen_len": 35,
+      "result_file_name": "basic_test",
+      "comments": "experiment"
+    },
+    {
+        "target_model": "Qwen/Qwen3-8B",
+        "drafter_model": "Qwen/Qwen3-0.6B",
+        "samples": 2,
+        "gamma": 3,
+        "gen_len": 10,
+        "result_file_name": "basic_test",
+        "comments": "experiment"
+    },
+    {
+        "target_model": "Qwen/Qwen3-8B",
+        "drafter_model": "Qwen/Qwen3-0.6B",
+        "samples": 10,
+        "gamma": 2,
+        "gen_len": 15,
+        "trial": 3,
+        "result_file_name": "basic_test",
+        "comments": "experiment"
+    }
+]
