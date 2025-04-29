@@ -309,7 +309,7 @@ class Experiment:
 
         data.append(experiment_result)
 
-        with open("data.json", "w") as file:
+        with open(self.file_name + ".json", "w") as file:
             json.dump(data, file, indent=4)
 
         
