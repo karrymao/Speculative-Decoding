@@ -313,7 +313,7 @@ def speculative_generate_multi(
 
         speculated_tokens = len(tree.nodelist) - 1 # exclude root node
         input_ids[0, current_position:current_position + speculated_tokens] = torch.tensor([node.token_id for node in tree.nodelist[1:]], device=input_ids.device)
-        drafts_speculated += speculated_tokens
+        drafts_speculated += corrected_gamma  # NOTE: this is not number of *all* drafts, but the *maximum* number of drafts accepted
         input_ids = input_ids.to(target.device)
         
         if debug:
