@@ -23,7 +23,7 @@ class Experiment:
     def __init__(self, device: str = "cuda", gamma = 4, gen_len = 35, 
         target_model = "meta-llama/Llama-3.2-3B-Instruct", 
         draft_model = "meta-llama/Llama-3.2-1B-Instruct",
-        sample_prob = 0.2, comments: str = "experiment"):
+        samples = 20, comments: str = "experiment"):
         print(
             colored("Speculative Decoding", "red"),
             colored("CLI", on_color="on_red", color="white"),
@@ -32,7 +32,7 @@ class Experiment:
         self.device = device
         self.target_model_name = target_model
         self.drafter_model_name = draft_model
-        self.sample_prob = sample_prob
+        self.samples = samples
         self.comments = comments
 
         self.gamma = gamma
@@ -263,10 +263,10 @@ class Experiment:
         }
 
     def _run(self):
-        df = pd.read_parquet("hf://datasets/data-is-better-together/10k_prompts_ranked/data/train-00000-of-00001.parquet")
+        df = pd.read_pickle("prompts10k.pkl")
         
         result = dict()
-        for row in df.sample(frac=self.sample_prob, random_state=15642).head(20)['prompt']:
+        for row in df.sample(n=self.samples, random_state=15642)['prompt']:
             outcome = self._infer(row)
             if not result: # empty
                 result = outcome
