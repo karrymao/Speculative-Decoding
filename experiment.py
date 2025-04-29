@@ -21,8 +21,8 @@ import json
 # this class is modified from infer.py
 class Experiment:
     def __init__(self, device: str = "cuda", gamma = 4, gen_len = 35, 
-        target_model = "meta-llama/Llama-3.2-3B-Instruct", 
-        draft_model = "meta-llama/Llama-3.2-1B-Instruct",
+        target_model = "Qwen/Qwen3-8B", 
+        draft_model = "Qwen/Qwen3-0.6B",
         samples = 20, comments: str = "experiment"):
         print(
             colored("Speculative Decoding", "red"),
@@ -121,8 +121,9 @@ class Experiment:
         
         self.ngram = NGramStorage(n=3, vocab_size=self.target.config.vocab_size)
         
-        self.end_tokens = [self.tokenizer.eos_token_id, self.tokenizer.convert_tokens_to_ids("<|eot_id|>")] # "<|eot_id|>" is the end of turn token for Llama model.
-
+        self.end_tokens = [self.tokenizer.eos_token_id]
+        if self.tokenizer.convert_tokens_to_ids("<|eot_id|>"):  # "<|eot_id|>" is the end of turn token for Llama model.
+            self.end_tokens.append(self.tokenizer.convert_tokens_to_ids("<|eot_id|>")) 
         
 
     def _infer(self, prefix: str):
@@ -323,6 +324,9 @@ if __name__ == "__main__":
     # parser = argparse.ArgumentParser(description="Speculative Decoding CLI")
     # parser.add_argument("--device", type=str, default="cuda", help="Device to use for inference")
     # args = parser.parse_args()
+    # with open('experiment_configs.json') as f:
+    #     configs = json.load(f)  # Returns a list containing your config object
+    # for experiment in configs:
     Experiment()
 
 
