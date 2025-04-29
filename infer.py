@@ -416,7 +416,8 @@ class InferenceCLI:
             if command.startswith("/"):
                 self._perform_command(command)
                 continue
-
+            
+            print("command: "+ command)
             self._infer(command)
             
     def _set_seed(self, seed: int):
