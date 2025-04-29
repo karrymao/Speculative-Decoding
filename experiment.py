@@ -165,6 +165,8 @@ class Experiment:
             spec_throughput = len(spec_output) / (spec_end_time - spec_start_time)
             print(colored(f"Throughput: {spec_throughput:.1f} tokens/s", "green"))
             print(colored("========== Speculative ==========", "green"))
+            spec_result = [len(spec_output), (spec_end_time - spec_start_time), 
+                drafts_accepted, drafts_speculated]
         
         if self.spec_multi:
             self._set_seed(42)
@@ -191,6 +193,8 @@ class Experiment:
             spec_multi_throughput = len(spec_multi_output) / (spec_multi_end_time - spec_multi_start_time)
             print(colored(f"Throughput: {spec_multi_throughput:.1f} tokens/s", "green"))
             print(colored("========== Speculative (Multi) ==========", "green"))
+            spec_multi_result = [len(spec_multi_output), (spec_multi_end_time - spec_multi_start_time), 
+                drafts_accepted, drafts_speculated]
 
 
         # if self.ngram_gen:
@@ -243,6 +247,8 @@ class Experiment:
             print(colored("=========== Target AR ===========", "blue"))
             if self.spec and base_throughput > 0.0:
                 print(colored(f"Throughput increase: {((spec_throughput / base_throughput)) * 100:.1f}%", "magenta"))
+            target_ar_result = [len(output), (end_time - start_time), 
+                0, 0] # zeros for consistency, can be ignored
 
         # if self.dr:
         #     self._set_seed(42)
@@ -263,9 +269,9 @@ class Experiment:
         #     print(colored(f"Throughput: {drafter_throughput:.1f} tokens/s", "cyan"))
         #     print(colored("========== Drafter AR ==========", "cyan"))
         return {
-            "speculative": [len(spec_output), (spec_end_time - spec_start_time)],
-            "speculative_multi": [len(spec_multi_output), (spec_multi_end_time - spec_multi_start_time)],
-            "target_ar": [len(output), (end_time - start_time)]
+            "speculative": spec_result,
+            "speculative_multi": spec_multi_result,
+            "target_ar": target_ar_result
         }
 
     def _run(self):
@@ -280,7 +286,8 @@ class Experiment:
             else:
                 for model,v in result.items():
                     outcome_v = outcome[model]
-                    v = [v[0] + outcome_v[0], v[1] + outcome_v[1]]
+                    v = [v[0] + outcome_v[0], v[1] + outcome_v[1], 
+                        v[2] + outcome_v[2], v[3] + outcome_v[3]]
                     result[model] = v
         # calculate throughput
         new_result = dict()
@@ -292,6 +299,10 @@ class Experiment:
                 model_result['throughput'] = 0
             else:
                 model_result['throughput'] = v[0]/v[1]
+            if v[2] == 0 or v[3] == 0:
+                model_result['acceptance rate'] = 0
+            else:
+                model_result['acceptance rate'] = v[2]/v[3]
             new_result[k] = model_result
         experiment_result = {
             "time": datetime.now().isoformat(),
