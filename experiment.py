@@ -23,7 +23,7 @@ class Experiment:
     def __init__(self, device: str = "cuda", gamma = 4, gen_len = 35, 
         target_model = "Qwen/Qwen3-8B", 
         drafter_model = "Qwen/Qwen3-0.6B",
-        samples = 20, comments: str = "experiment", result_file_name = "basic_test"):
+        samples = 10, comments: str = "experiment", result_file_name = "basic_test"):
         print(
             colored("Speculative Decoding", "red"),
             colored("CLI", on_color="on_red", color="white"),
@@ -267,7 +267,7 @@ class Experiment:
         }
 
     def _run(self):
-        df = pd.read_pickle("prompts10k.pkl")
+        df = pd.read_pickle("shortPrompts.pkl")
         # collect result
         result = dict()
         for row in df.sample(n=self.samples, random_state=15642)['prompt']:
