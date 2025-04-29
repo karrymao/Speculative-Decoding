@@ -13,6 +13,7 @@ from transformers import (
 import time
 import os
 from termcolor import colored
+from copy import copy
 
 import pandas as pd
 from datetime import datetime
@@ -23,7 +24,8 @@ class Experiment:
     def __init__(self, device: str = "cuda", gamma = 4, gen_len = 35, trial = 5,
         target_model = "Qwen/Qwen3-8B", 
         drafter_model = "Qwen/Qwen3-0.6B",
-        samples = 10, comments: str = "experiment", result_file_name = "basic_test"):
+        samples = 10, comments: str = "experiment", result_file_name = "basic_test", 
+        configs = {}):
         print(
             colored("Speculative Decoding", "red"),
             colored("CLI", on_color="on_red", color="white"),
@@ -35,6 +37,7 @@ class Experiment:
         self.samples = samples
         self.comments = comments
         self.file_name = result_file_name
+        self.configs = configs
 
         self.gamma = gamma
         self.trial = trial
@@ -309,7 +312,8 @@ class Experiment:
             "drafter_model": self.drafter_model_name,
             "target_model": self.target_model_name,
             "result": new_result,
-            "comments": self.comments
+            "comments": self.comments,
+            "configs": self.configs
         }
         print(experiment_result["time"])
         # append to previous results
@@ -345,6 +349,7 @@ if __name__ == "__main__":
     i = 1
     for experiment in configs:
         print(colored("Starting experiment: ", on_color="on_red"), i)
+        experiment['configs'] = experiment.copy()
         Experiment(**experiment)
         i+=1
     # Experiment()
