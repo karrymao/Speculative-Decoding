@@ -82,7 +82,7 @@ class Experiment:
         self.processor = GreedyProcessor()
 
         self._load_models()
-        # self._run()
+        self._run()
 
     def _load_models(self):
         # Target model
@@ -317,8 +317,9 @@ class Experiment:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Speculative Decoding CLI")
-    parser.add_argument("--device", type=str, default="cuda", help="Device to use for inference")
-    args = parser.parse_args()
+    # parser = argparse.ArgumentParser(description="Speculative Decoding CLI")
+    # parser.add_argument("--device", type=str, default="cuda", help="Device to use for inference")
+    # args = parser.parse_args()
+    Experiment()
 
 
