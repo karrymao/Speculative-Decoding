@@ -141,7 +141,7 @@ class Experiment:
         if self.spec:
             self._set_seed(42)
             spec_start_time = time.time()
-            output_ids, accept_rate = speculative_generate(
+            output_ids, drafts_accepted, drafts_speculated = speculative_generate(
                 tokenized,
                 self.drafter,
                 self.target,
@@ -153,6 +153,7 @@ class Experiment:
                 debug=self.debug,
                 use_cache=self.cache,
             )
+            accept_rate = drafts_accepted/drafts_speculated
             spec_end_time = time.time()
             spec_output = self.tokenizer.decode(output_ids, skip_special_tokens=True)
             print(colored("========== Speculative ==========", "green"))
@@ -165,7 +166,7 @@ class Experiment:
         if self.spec_multi:
             self._set_seed(42)
             spec_multi_start_time = time.time()
-            output_ids, accept_rate = speculative_generate_multi(
+            output_ids, drafts_accepted, drafts_speculated = speculative_generate_multi(
                 tokenized,
                 self.drafter,
                 self.target,
@@ -177,6 +178,7 @@ class Experiment:
                 debug=self.debug,
                 use_cache=self.cache,
             )
+            accept_rate = drafts_accepted/drafts_speculated
             spec_multi_end_time = time.time()
             spec_multi_output = self.tokenizer.decode(output_ids, skip_special_tokens=True)
             print(colored("========== Speculative (Multi) ==========", "green"))
@@ -264,7 +266,7 @@ class Experiment:
 
     def _run(self):
         df = pd.read_pickle("prompts10k.pkl")
-        
+        # collect result
         result = dict()
         for row in df.sample(n=self.samples, random_state=15642)['prompt']:
             outcome = self._infer(row)
@@ -293,6 +295,7 @@ class Experiment:
             "result": new_result,
             "comments": self.comments
         }
+        # append to previous results
         try:
             with open("result.json", "r") as file:
                 data = json.load(file)
