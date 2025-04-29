@@ -77,11 +77,13 @@ class InferenceCLI:
     def _load_models(self):
         # Target model
         # target_model = "meta-llama/Llama-3.2-3B-Instruct"
-        target_model = "meta-llama/Llama-3.2-11B-Vision-Instruct"
+        # target_model = "meta-llama/Llama-3.2-11B-Vision-Instruct"
+        target_model = "Qwen/Qwen3-8B"
         target_quantize = QuantoConfig(weights="int8")  # QuantoConfig(weights="int8")  None
         
         # Drafter model
-        drafter_model = "meta-llama/Llama-3.2-1B-Instruct"
+        # drafter_model = "meta-llama/Llama-3.2-1B-Instruct"
+        drafter_model = "Qwen/Qwen3-0.6B"
         drafter_quantize = QuantoConfig(weights="int8")  # QuantoConfig(weights="int8") None
 
         print(colored("Target model:", on_color="on_yellow"), target_model)
@@ -111,7 +113,9 @@ class InferenceCLI:
         
         self.ngram = NGramStorage(n=3, vocab_size=self.target.config.vocab_size)
         
-        self.end_tokens = [self.tokenizer.eos_token_id, self.tokenizer.convert_tokens_to_ids("<|eot_id|>")] # "<|eot_id|>" is the end of turn token for Llama model.
+        self.end_tokens = [self.tokenizer.eos_token_id]
+        if self.tokenizer.convert_tokens_to_ids("<|eot_id|>"):  # "<|eot_id|>" is the end of turn token for Llama model.
+            self.end_tokens.append(self.tokenizer.convert_tokens_to_ids("<|eot_id|>")) 
 
     def _perform_command(self, command: str):
         args = command.split(" ")
