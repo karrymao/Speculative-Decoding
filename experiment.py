@@ -276,7 +276,7 @@ class Experiment:
             if not result: # empty
                 result = outcome
             else:
-                for model,v in result:
+                for model,v in result.items():
                     outcome_v = outcome[model]
                     v = [v[0] + outcome_v[0], v[1] + outcome_v[1]]
                     result[model] = v
