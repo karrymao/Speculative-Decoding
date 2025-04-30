@@ -26,7 +26,8 @@ class InferenceCLI:
         self.device = device
 
         self.gamma = 4
-        self.gen_len = 35
+        self.trial = 5
+        self.gen_len = 100
         self.debug = False
         self.spec = True
         self.spec_multi = True
@@ -34,7 +35,7 @@ class InferenceCLI:
         self.cache = False
         self.target_gen = True
         # Ngram Assisted Generation
-        self.ngram_gen = True
+        self.ngram_gen = False
         self.ngram = None
         self.top_k_filler = 3
         self.ngram_n = 3
@@ -69,7 +70,7 @@ class InferenceCLI:
             "processor": GreedyProcessor,
             "args": {"temperature": 1.0},
         }
-        self.processor = GreedyProcessor()
+        self.processor = TopKProcessor(temperature=1.0, top_k=10)
 
         self._load_models()
         self._run()
