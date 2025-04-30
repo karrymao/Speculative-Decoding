@@ -178,7 +178,7 @@ class Experiment:
             spec_throughput = len(output_ids) / (spec_end_time - spec_start_time)
             print(colored(f"Throughput: {spec_throughput:.1f} tokens/s", "green"))
             print(colored("========== Speculative ==========", "green"))
-            spec_result = [len(spec_output), (spec_end_time - spec_start_time), 
+            spec_result = [len(output_ids), (spec_end_time - spec_start_time), 
                 drafts_accepted, drafts_speculated]
         
         if self.spec_multi:
@@ -207,7 +207,7 @@ class Experiment:
             spec_multi_throughput = len(output_ids) / (spec_multi_end_time - spec_multi_start_time)
             print(colored(f"Throughput: {spec_multi_throughput:.1f} tokens/s", "green"))
             print(colored("========== Speculative (Multi) ==========", "green"))
-            spec_multi_result = [len(spec_multi_output), (spec_multi_end_time - spec_multi_start_time), 
+            spec_multi_result = [len(output_ids), (spec_multi_end_time - spec_multi_start_time), 
                 drafts_accepted, drafts_speculated]
 
 
@@ -261,7 +261,7 @@ class Experiment:
             print(colored("=========== Target AR ===========", "blue"))
             if self.spec and base_throughput > 0.0:
                 print(colored(f"Throughput increase: {((spec_throughput / base_throughput)) * 100:.1f}%", "magenta"))
-            target_ar_result = [len(output), (end_time - start_time), 
+            target_ar_result = [len(output_ids), (end_time - start_time), 
                 0, 0] # zeros for consistency, can be ignored
 
         # if self.dr:
