@@ -143,7 +143,7 @@ class Experiment:
 
     def _infer(self, prefix: str):
         if self.chat:
-            prefix = self.tokenizer.apply_chat_template([{"role": "user", "content": prefix}], add_generation_prompt=True, tokenize=False, enable_thinking=False)
+            prefix = self.tokenizer.apply_chat_template([{"role": "user", "content": prefix}], add_generation_prompt=True, tokenize=False)
             
         tokenized = self.tokenizer(prefix, return_tensors="pt").input_ids[0].tolist()
         
