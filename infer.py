@@ -311,7 +311,7 @@ class InferenceCLI:
             print(colored("========== Speculative ==========", "green"))
             print(colored("Out:", "green"), spec_output)
             print(colored(f"Acceptance rate: {accept_rate:.3f}", "green"))
-            spec_throughput = len(spec_output) / (spec_end_time - spec_start_time)
+            spec_throughput = len(output_ids) / (spec_end_time - spec_start_time)
             print(colored(f"Throughput: {spec_throughput:.1f} tokens/s", "green"))
             print(colored("========== Speculative ==========", "green"))
         
@@ -336,7 +336,7 @@ class InferenceCLI:
             print(colored("========== Speculative (Multi) ==========", "green"))
             print(colored("Out:", "green"), spec_multi_output)
             print(colored(f"Acceptance rate: {accept_rate:.3f}", "green"))
-            spec_multi_throughput = len(spec_multi_output) / (spec_multi_end_time - spec_multi_start_time)
+            spec_multi_throughput = len(output_ids) / (spec_multi_end_time - spec_multi_start_time)
             print(colored(f"Throughput: {spec_multi_throughput:.1f} tokens/s", "green"))
             print(colored("========== Speculative (Multi) ==========", "green"))
 
@@ -364,7 +364,7 @@ class InferenceCLI:
             print(colored("========== Ngram Assisted ==========", "yellow"))
             print(colored("Out:", "yellow"), ngram_output)
             print(colored(f"Acceptance rate: {accept_rate:.3f}", "yellow"))
-            ngram_throughput = len(ngram_output) / (ngram_end_time - ngram_start_time)
+            ngram_throughput = len(output_ids) / (ngram_end_time - ngram_start_time)
             print(colored(f"Throughput: {ngram_throughput:.1f} tokens/s", "yellow"))
             print(colored("========== Ngram Assisted ==========", "yellow"))
             if self.spec and ngram_throughput > 0.0:
@@ -386,7 +386,7 @@ class InferenceCLI:
             output = self.tokenizer.decode(output_ids, skip_special_tokens=True)
             print(colored("=========== Target AR ===========", "blue"))
             print(colored("Out:", "blue"), output)
-            base_throughput = len(output) / (end_time - start_time)
+            base_throughput = len(output_ids) / (end_time - start_time)
             print(colored(f"Throughput: {base_throughput:.1f} tokens/s", "blue"))
             print(colored("=========== Target AR ===========", "blue"))
             if self.spec and base_throughput > 0.0:
@@ -406,7 +406,7 @@ class InferenceCLI:
             output = self.tokenizer.decode(output_ids, skip_special_tokens=True)
 
             print(colored("========== Drafter AR ==========", "cyan"))
-            drafter_throughput = len(output) / (end_time - start_time)
+            drafter_throughput = len(output_ids) / (end_time - start_time)
             print(colored("Out:", "cyan"), output)
             print(colored(f"Throughput: {drafter_throughput:.1f} tokens/s", "cyan"))
             print(colored("========== Drafter AR ==========", "cyan"))
