@@ -92,7 +92,7 @@ class InferenceCLI:
 
         self.target = AutoModelForCausalLM.from_pretrained(
             target_model,
-            quantization_config=target_quantize,
+            # quantization_config=target_quantize,
             device_map=self.device,
             trust_remote_code=True,
         )
@@ -105,7 +105,7 @@ class InferenceCLI:
 
         self.drafter = AutoModelForCausalLM.from_pretrained(
             drafter_model,
-            quantization_config=drafter_quantize,
+            # quantization_config=drafter_quantize,
             device_map=self.device,
             trust_remote_code=True,
         )
@@ -278,7 +278,7 @@ class InferenceCLI:
 
     def _infer(self, prefix: str):
         if self.chat:
-            prefix = self.tokenizer.apply_chat_template([{"role": "user", "content": prefix}], add_generation_prompt=True, tokenize=False)
+            prefix = self.tokenizer.apply_chat_template([{"role": "user", "content": prefix}], add_generation_prompt=True, tokenize=False, enable_thinking=False)
             
         tokenized = self.tokenizer(prefix, return_tensors="pt").input_ids[0].tolist()
         
