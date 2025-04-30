@@ -21,12 +21,15 @@ import json
 
 # this class is modified from infer.py
 class Experiment:
-    def __init__(
+    def __init__(self):
+        self.device = "cuda"
+        self.target_model_name = "Qwen/Qwen3-8B"
+        self.drafter_model_name = "Qwen/Qwen3-0.6B"
+        self._load_models()
+
+    def run_param(
             self, 
-            device: str = "cuda",
-            target_model = "Qwen/Qwen3-8B",
-            drafter_model = "Qwen/Qwen3-0.6B",
-            samples = 20, 
+            samples = 10, 
             gamma: int = 5,
             trial: int = 5,
             gen_len: int = 100,
@@ -40,9 +43,7 @@ class Experiment:
             colored("CLI", on_color="on_red", color="white"),
             "\n",
         )
-        self.device = device
-        self.target_model_name = target_model
-        self.drafter_model_name = drafter_model
+
         self.samples = samples
         self.comments = comments
         self.file_name = result_file_name
@@ -96,7 +97,6 @@ class Experiment:
         }
         self.processor = TopKProcessor(temperature=1.0, top_k=10)
 
-        self._load_models()
         self._run()
 
     def _load_models(self):
@@ -147,8 +147,8 @@ class Experiment:
             
         tokenized = self.tokenizer(prefix, return_tensors="pt").input_ids[0].tolist()
         
-        if self.reset_in_between:
-            self.ngram.reset()
+        # if self.reset_in_between:
+        #     self.ngram.reset()
         
         spec_throughput = 0.0
         base_throughput = 0.0
@@ -358,10 +358,12 @@ if __name__ == "__main__":
     with open('experiment_configs.json') as f:
         configs = json.load(f)  # Returns a list containing your config object
     i = 1
+
+    exp = Experiment()
     for experiment in configs:
         print(colored("Starting experiment: ", on_color="on_red"), i)
         experiment['configs'] = experiment.copy()
-        Experiment(**experiment)
+        exp.run_param(**experiment)
         i+=1
     # Experiment()
 
