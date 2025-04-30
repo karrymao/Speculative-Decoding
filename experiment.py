@@ -13,6 +13,7 @@ from transformers import (
 import time
 import os
 from termcolor import colored
+from copy import copy
 
 import pandas as pd
 from datetime import datetime
@@ -20,10 +21,11 @@ import json
 
 # this class is modified from infer.py
 class Experiment:
-    def __init__(self, device: str = "cuda", gamma = 4, gen_len = 35, 
-        target_model = "meta-llama/Llama-3.2-3B-Instruct", 
-        draft_model = "meta-llama/Llama-3.2-1B-Instruct",
-        sample_prob = 0.2, comments: str = "experiment"):
+    def __init__(self, device: str = "cuda", gamma = 4, gen_len = 35, trial = 5,
+        target_model = "Qwen/Qwen3-8B", 
+        drafter_model = "Qwen/Qwen3-0.6B",
+        samples = 10, comments: str = "experiment", result_file_name = "basic_test", 
+        configs = {}):
         print(
             colored("Speculative Decoding", "red"),
             colored("CLI", on_color="on_red", color="white"),
@@ -31,11 +33,14 @@ class Experiment:
         )
         self.device = device
         self.target_model_name = target_model
-        self.drafter_model_name = draft_model
-        self.sample_prob = sample_prob
+        self.drafter_model_name = drafter_model
+        self.samples = samples
         self.comments = comments
+        self.file_name = result_file_name
+        self.configs = configs
 
         self.gamma = gamma
+        self.trial = trial
         self.gen_len = gen_len
         self.debug = False
         self.spec = True
@@ -82,7 +87,7 @@ class Experiment:
         self.processor = GreedyProcessor()
 
         self._load_models()
-        # self._run()
+        self._run()
 
     def _load_models(self):
         # Target model
@@ -121,8 +126,9 @@ class Experiment:
         
         self.ngram = NGramStorage(n=3, vocab_size=self.target.config.vocab_size)
         
-        self.end_tokens = [self.tokenizer.eos_token_id, self.tokenizer.convert_tokens_to_ids("<|eot_id|>")] # "<|eot_id|>" is the end of turn token for Llama model.
-
+        self.end_tokens = [self.tokenizer.eos_token_id]
+        if self.tokenizer.convert_tokens_to_ids("<|eot_id|>"):  # "<|eot_id|>" is the end of turn token for Llama model.
+            self.end_tokens.append(self.tokenizer.convert_tokens_to_ids("<|eot_id|>")) 
         
 
     def _infer(self, prefix: str):
@@ -141,7 +147,7 @@ class Experiment:
         if self.spec:
             self._set_seed(42)
             spec_start_time = time.time()
-            output_ids, accept_rate = speculative_generate(
+            output_ids, drafts_accepted, drafts_speculated = speculative_generate(
                 tokenized,
                 self.drafter,
                 self.target,
@@ -153,6 +159,7 @@ class Experiment:
                 debug=self.debug,
                 use_cache=self.cache,
             )
+            accept_rate = drafts_accepted/drafts_speculated
             spec_end_time = time.time()
             spec_output = self.tokenizer.decode(output_ids, skip_special_tokens=True)
             print(colored("========== Speculative ==========", "green"))
@@ -161,22 +168,26 @@ class Experiment:
             spec_throughput = len(spec_output) / (spec_end_time - spec_start_time)
             print(colored(f"Throughput: {spec_throughput:.1f} tokens/s", "green"))
             print(colored("========== Speculative ==========", "green"))
+            spec_result = [len(spec_output), (spec_end_time - spec_start_time), 
+                drafts_accepted, drafts_speculated]
         
         if self.spec_multi:
             self._set_seed(42)
             spec_multi_start_time = time.time()
-            output_ids, accept_rate = speculative_generate_multi(
+            output_ids, drafts_accepted, drafts_speculated = speculative_generate_multi(
                 tokenized,
                 self.drafter,
                 self.target,
                 tokenizer=self.tokenizer,
                 logits_processor=self.processor,
                 gamma=self.gamma,
+                trial = self.trial,
                 max_gen_len=self.gen_len,
                 eos_tokens_id=self.end_tokens,
                 debug=self.debug,
                 use_cache=self.cache,
             )
+            accept_rate = drafts_accepted/drafts_speculated
             spec_multi_end_time = time.time()
             spec_multi_output = self.tokenizer.decode(output_ids, skip_special_tokens=True)
             print(colored("========== Speculative (Multi) ==========", "green"))
@@ -185,6 +196,8 @@ class Experiment:
             spec_multi_throughput = len(spec_multi_output) / (spec_multi_end_time - spec_multi_start_time)
             print(colored(f"Throughput: {spec_multi_throughput:.1f} tokens/s", "green"))
             print(colored("========== Speculative (Multi) ==========", "green"))
+            spec_multi_result = [len(spec_multi_output), (spec_multi_end_time - spec_multi_start_time), 
+                drafts_accepted, drafts_speculated]
 
 
         # if self.ngram_gen:
@@ -237,6 +250,8 @@ class Experiment:
             print(colored("=========== Target AR ===========", "blue"))
             if self.spec and base_throughput > 0.0:
                 print(colored(f"Throughput increase: {((spec_throughput / base_throughput)) * 100:.1f}%", "magenta"))
+            target_ar_result = [len(output), (end_time - start_time), 
+                0, 0] # zeros for consistency, can be ignored
 
         # if self.dr:
         #     self._set_seed(42)
@@ -257,27 +272,29 @@ class Experiment:
         #     print(colored(f"Throughput: {drafter_throughput:.1f} tokens/s", "cyan"))
         #     print(colored("========== Drafter AR ==========", "cyan"))
         return {
-            "speculative": [len(spec_output), (spec_end_time - spec_start_time)],
-            "speculative_multi": [len(spec_multi_output), (spec_multi_end_time - spec_multi_start_time)],
-            "target_ar": [len(output), (end_time - start_time)]
+            "speculative": spec_result,
+            "speculative_multi": spec_multi_result,
+            "target_ar": target_ar_result
         }
 
     def _run(self):
-        df = pd.read_parquet("hf://datasets/data-is-better-together/10k_prompts_ranked/data/train-00000-of-00001.parquet")
-        
+        df = pd.read_pickle("short_prompts10k.pkl")
+        # collect result
         result = dict()
-        for row in df.sample(frac=self.sample_prob, random_state=15642).head(20)['prompt']:
+        for row in df.sample(n=self.samples, random_state=15642)['prompt']:
+            print("row: " + row)
             outcome = self._infer(row)
             if not result: # empty
                 result = outcome
             else:
-                for model,v in result:
+                for model,v in result.items():
                     outcome_v = outcome[model]
-                    v = [v[0] + outcome_v[0], v[1] + outcome_v[1]]
+                    v = [v[0] + outcome_v[0], v[1] + outcome_v[1], 
+                        v[2] + outcome_v[2], v[3] + outcome_v[3]]
                     result[model] = v
         # calculate throughput
         new_result = dict()
-        for k, v in result:
+        for k, v in result.items():
             model_result = dict()
             model_result['num_token'] = v[0]
             model_result['time'] = v[1]
@@ -285,23 +302,30 @@ class Experiment:
                 model_result['throughput'] = 0
             else:
                 model_result['throughput'] = v[0]/v[1]
+            if v[2] == 0 or v[3] == 0:
+                model_result['acceptance rate'] = 0
+            else:
+                model_result['acceptance rate'] = v[2]/v[3]
             new_result[k] = model_result
         experiment_result = {
             "time": datetime.now().isoformat(),
             "drafter_model": self.drafter_model_name,
             "target_model": self.target_model_name,
             "result": new_result,
-            "comments": self.comments
+            "comments": self.comments,
+            "configs": self.configs
         }
+        print(experiment_result["time"])
+        # append to previous results
         try:
-            with open("result.json", "r") as file:
+            with open(self.file_name + ".json", "r") as file:
                 data = json.load(file)
         except FileNotFoundError:
             data = []  # Initialize if file doesn't exist
 
         data.append(experiment_result)
 
-        with open("data.json", "w") as file:
+        with open(self.file_name + ".json", "w") as file:
             json.dump(data, file, indent=4)
 
         
@@ -317,8 +341,17 @@ class Experiment:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Speculative Decoding CLI")
-    parser.add_argument("--device", type=str, default="cuda", help="Device to use for inference")
-    args = parser.parse_args()
+    # parser = argparse.ArgumentParser(description="Speculative Decoding CLI")
+    # parser.add_argument("--device", type=str, default="cuda", help="Device to use for inference")
+    # args = parser.parse_args()
+    with open('experiment_configs.json') as f:
+        configs = json.load(f)  # Returns a list containing your config object
+    i = 1
+    for experiment in configs:
+        print(colored("Starting experiment: ", on_color="on_red"), i)
+        experiment['configs'] = experiment.copy()
+        Experiment(**experiment)
+        i+=1
+    # Experiment()
 
 
