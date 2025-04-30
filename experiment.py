@@ -41,6 +41,7 @@ class Experiment:
 
         self.gamma = gamma
         self.trial = trial
+        self.prune_width = 0  # 0 means no pruning 
         self.gen_len = gen_len
         self.debug = False
         self.spec = True
@@ -181,7 +182,8 @@ class Experiment:
                 tokenizer=self.tokenizer,
                 logits_processor=self.processor,
                 gamma=self.gamma,
-                trial = self.trial,
+                trial=self.trial,
+                prune_width=self.prune_width,
                 max_gen_len=self.gen_len,
                 eos_tokens_id=self.end_tokens,
                 debug=self.debug,
