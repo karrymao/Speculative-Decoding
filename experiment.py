@@ -21,11 +21,20 @@ import json
 
 # this class is modified from infer.py
 class Experiment:
-    def __init__(self, device: str = "cuda", gamma = 4, gen_len = 35, trial = 5,
-        target_model = "Qwen/Qwen3-8B", 
-        drafter_model = "Qwen/Qwen3-0.6B",
-        samples = 10, comments: str = "experiment", result_file_name = "basic_test", 
-        configs = {}):
+    def __init__(
+            self, 
+            device: str = "cuda",
+            target_model = "Qwen/Qwen3-8B",
+            drafter_model = "Qwen/Qwen3-0.6B",
+            samples = 20, 
+            gamma: int = 5,
+            trial: int = 5,
+            gen_len: int = 100,
+            prune_width: int = 0,
+            comments: str = "experiment", 
+            result_file_name: str = "basic_test",
+            configs = {}
+        ):
         print(
             colored("Speculative Decoding", "red"),
             colored("CLI", on_color="on_red", color="white"),
@@ -41,14 +50,14 @@ class Experiment:
 
         self.gamma = gamma
         self.trial = trial
-        self.prune_width = 0  # 0 means no pruning 
+        self.prune_width = prune_width
         self.gen_len = gen_len
         self.debug = False
-        self.spec = True
+        self.spec = False
         self.spec_multi = True
         self.dr = False
         self.cache = False
-        self.target_gen = True
+        self.target_gen = False
         # Ngram Assisted Generation
         self.ngram_gen = False
         self.ngram = None
@@ -85,7 +94,7 @@ class Experiment:
             "processor": GreedyProcessor,
             "args": {"temperature": 1.0},
         }
-        self.processor = GreedyProcessor()
+        self.processor = TopKProcessor(temperature=1.0, top_k=10)
 
         self._load_models()
         self._run()
@@ -274,9 +283,9 @@ class Experiment:
         #     print(colored(f"Throughput: {drafter_throughput:.1f} tokens/s", "cyan"))
         #     print(colored("========== Drafter AR ==========", "cyan"))
         return {
-            "speculative": spec_result,
+            # "speculative": spec_result,
             "speculative_multi": spec_multi_result,
-            "target_ar": target_ar_result
+            # "target_ar": target_ar_result
         }
 
     def _run(self):
