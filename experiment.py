@@ -34,6 +34,8 @@ class Experiment:
             trial: int = 5,
             gen_len: int = 100,
             prune_width: int = 0,
+            temperature: float = 1.0,
+            top_k: int = 10,
             comments: str = "experiment", 
             result_file_name: str = "basic_test",
             configs = {}
@@ -52,6 +54,8 @@ class Experiment:
         self.gamma = gamma
         self.trial = trial
         self.prune_width = prune_width
+        self.temperature = temperature
+        self.top_k = top_k
         self.gen_len = gen_len
         self.debug = False
         self.spec = False
@@ -95,7 +99,7 @@ class Experiment:
             "processor": GreedyProcessor,
             "args": {"temperature": 1.0},
         }
-        self.processor = TopKProcessor(temperature=1.0, top_k=10)
+        self.processor = TopKProcessor(temperature=self.temperature, top_k=self.top_k)
 
         self._run()
 
