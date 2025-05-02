@@ -313,7 +313,7 @@ def speculative_generate_multi(
                 print(printing.token_ids_to_string([_[0] for _ in seq], tokenizer))
         
         if prune_width:
-            tree.prune_with_beam_search(prune_width)
+            tree = tree.prune_with_beam_search(prune_width)
 
         speculated_tokens = len(tree.nodelist) - 1 # exclude root node
         input_ids[0, current_position:current_position + speculated_tokens] = torch.tensor([node.token_id for node in tree.nodelist[1:]], device=input_ids.device)
